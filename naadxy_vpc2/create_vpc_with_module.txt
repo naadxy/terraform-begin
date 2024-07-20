@@ -1,0 +1,1 @@
+The vpc-module.tf in naadxy_vpc2 creates a vpc by using a module in naadxy_vpc_module
