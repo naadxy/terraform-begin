@@ -16,7 +16,6 @@ resource "aws_vpc" "naadxy_tf_vpc" {
 resource "aws_subnet" "naadxy_private" {
   count = 2
   vpc_id = aws_vpc.naadxy_tf_vpc.id
-  # Use cidrsubnet() function to generate subnet CIDR block from the VPC CIDR block
   cidr_block = cidrsubnet(aws_vpc.naadxy_tf_vpc.cidr_block, 4, count.index)
   availability_zone = element(["us-east-1a", "us-east-1b"], count.index)
 
@@ -29,8 +28,6 @@ resource "aws_subnet" "naadxy_private" {
 resource "aws_subnet" "naadxy_public" {
   count = 2
   vpc_id = aws_vpc.naadxy_tf_vpc.id
-  # Use cidrsubnet() function to generate subnet CIDR block from the VPC CIDR block
-  # Add 8 to the count index to ensure the public subnets are in different CIDR blocks
   cidr_block = cidrsubnet(aws_vpc.naadxy_tf_vpc.cidr_block, 4, count.index + 8)
   availability_zone = element(["us-east-1a", "us-east-1b"], count.index)
 
@@ -133,6 +130,26 @@ resource "aws_security_group" "naadxy_tf_sg_allow_ssh_http_https" {
 
   tags = {
     Name = "naadxy-tf-sg-allow-ssh-http-https"
+  }
+}
+
+# Create an EC2 instance
+resource "aws_instance" "naadxy_tf_instance" {
+  ami           = "ami-0b72821e2f351e396"
+  instance_type = "t2.micro"
+  key_name      = "naadxy"
+  subnet_id     = aws_subnet.naadxy_public[0].id
+  associate_public_ip_address = true
+
+  vpc_security_group_ids = [aws_security_group.naadxy_tf_sg_allow_ssh_http_https.id]
+
+  tags = {
+    Name = "naadxy-tf-ec2"
+  }
+
+  root_block_device {
+    volume_size = 8
+    volume_type = "gp3"
   }
 }
 
